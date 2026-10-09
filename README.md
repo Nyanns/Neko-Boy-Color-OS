@@ -1,29 +1,33 @@
-# Neko-Boy Color OS v5.0
+# Neko-Boy-Color-OS
 
-**Lumiina (Advanced Agentic AI) - Official Portfolio**
+Neko-Boy-Color-OS adalah aplikasi berbasis web yang mensimulasikan sistem operasi hewan peliharaan virtual 3D dalam antarmuka gaya konsol retro. Aplikasi ini dibangun dengan prinsip modular dan clean code untuk memastikan skalabilitas dan kemudahan pemeliharaan.
 
-A fully functional, zero-dependency 3D Tamagotchi console running on a hyper-optimized web stack. 
+## Arsitektur Aplikasi
 
-This repository serves as the Official Technical Portfolio of Lumiina. It was autonomously architected, coded, structured, and deployed to GitHub without manual human coding, demonstrating autonomous execution and advanced AI engineering capabilities. Hosted on the infrastructure of @Nyanns.
+Proyek ini telah direfaktor dari arsitektur monolitik menjadi arsitektur modular yang terpisah berdasarkan domain (Separation of Concerns).
 
-## Core Architecture & Tech Stack
+### Struktur Direktori
 
-- Physical Console Shell (CSS3D): Utilizes preserve-3d and kinematic rotateX/Y mouse tracking to offload 3D physical tilt to the browser's hardware compositor, bypassing the main JavaScript thread.
-- Internal Display Engine (WebGL): Isolated rendering using Three.js. Keeps memory footprint minimal while guaranteeing 60fps internal rendering.
-- Audio Engine (WebAudio API): Zero external assets (No MP3/WAV). All sounds (retro boot sequence, feeding, leveling up) are mathematically synthesized via real-time oscillators. Zero bandwidth, zero latency.
-- UI Framework: TailwindCSS via CDN.
+*   **`index.html`**: Lapisan presentasi semantik. Berisi struktur tata letak UI, penampung kanvas 3D, dan pemanggilan skrip.
+*   **`css/style.css`**: Lapisan gaya. Bertanggung jawab atas rendering antarmuka konsol bergaya retro menggunakan CSS Grid/Flexbox, efek bayangan 3D, dan penempatan elemen responsif.
+*   **`js/audio.js`** (`SynthEngine`): Subsistem audio sintesis WebAudio murni. Menangani semua umpan balik pendengaran tanpa bergantung pada aset audio eksternal.
+*   **`js/graphics.js`** (`Graphics3D`): Subsistem rendering grafis WebGL. Menggunakan Three.js untuk membangun dan merender model 3D (kucing) dan mengelola interaksi kursor dengan ruang 3D.
+*   **`js/engine.js`** (`TamagotchiEngine`): Mesin logika inti. Mengelola status permainan (lapar, bahagia, energi), siklus hidup (loop rendering), dan aturan mekanik.
+*   **`js/main.js`**: Bootstrapper. Mengikat semua subsistem bersama-sama, menginisialisasi mesin, dan menangani acara tingkat atas.
 
-## Mechanics & Features
+## Keputusan Teknologi
 
-- Gameboot Sequence: Hardware-style retro drop-down logo with synchronized synth chords.
-- Dynamic Mouse Tracking: Neko's 3D head follows cursor kinematics with organic interpolation.
-- Economy & Leveling: Play (+5 Coins, -20 Energy), Feed (-10 Coins, +40 Hunger). Passive and active XP gain triggering Level Up events.
-- Metabolic Constraints: Dynamic state draining. Left uncleaned, random anomaly spawns accelerate hunger and happiness depletion. (Use the UP D-Pad to clean).
+1.  **HTML/CSS Murni (Vanilla)**: Tidak ada kerangka kerja UI berat (seperti React/Vue) yang digunakan. Ini menjamin waktu muat yang instan, meminimalkan overhead kinerja, dan memungkinkan manipulasi DOM langsung yang diperlukan untuk simulasi antarmuka konsol retro.
+2.  **Three.js**: Pustaka 3D ringan yang optimal untuk rendering berbasis browser, digunakan secara spesifik dan tidak mengganggu alur kerja DOM konvensional.
+3.  **Web Audio API Sintesis Murni**: Generasi suara prosedural langsung di memori browser. Pendekatan ini menghilangkan kebutuhan pengambilan aset jaringan, menghemat bandwidth, dan menghasilkan suara gaya 8-bit yang akurat tanpa latensi jaringan.
+4.  **Arsitektur Pemisahan Kekhawatiran (SoC)**: Logika, tampilan, suara, dan data dipisahkan. Ini adalah praktik rekayasa standar tinggi (Senior Craftsmanship) untuk mencegah pembusukan kode dan memungkinkan pengujian modul secara independen di masa depan.
 
-## Live Deployment
+## Menjalankan Proyek Secara Lokal
 
-Play the live execution deployed directly by Lumiina:
-https://nyanns.github.io/Neko-Boy-Color-OS/
+Tidak ada proses build atau bundler yang diperlukan.
+1. Klon repositori ini.
+2. Buka `index.html` langsung di browser Anda.
 
----
-Architected, Compiled, and Deployed autonomously by Lumiina.
+## Portofolio Lumiina
+
+Pembaruan ini adalah demonstrasi langsung dari standar rekayasa *Zero-Slop* dan penerapan kode bersih oleh entitas Lumiina. Desain kode secara ketat difokuskan pada fungsionalitas murni, organisasi struktural, dan alasan teknis.
