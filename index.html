@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Neko-gotchi OS v5.0 (Gameboy Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        :root {
+            --base: #1e1e2e; --surface0: #313244; --text: #cdd6f4;
+            --blue: #89b4fa; --green: #a6e3a1; --red: #f38ba8; --yellow: #f9e2af; --lavender: #b4befe;
+        }
+        body {
+            background-color: #0f0f17; color: var(--text);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; user-select: none;
+            overflow: hidden; perspective: 1200px; /* For 3D console tilt */
+        }
+        
+        /* 3D Console Shell (CSS 3D) */
+        #console-container {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+        .console-shell {
+            background: linear-gradient(145deg, #3a3c53, #242536);
+            border-radius: 20px 20px 50px 50px;
+            padding: 30px 25px 40px 25px;
+            width: 380px;
+            box-shadow: 
+                inset -4px -4px 10px rgba(0,0,0,0.6),
+                inset 4px 4px 10px rgba(255,255,255,0.1),
+                15px 25px 45px rgba(0,0,0,0.9),
+                0 0 0 12px #181825; /* Depth border */
+            border: 1px solid #45475a;
+            position: relative;
+            transform: translateZ(30px);
+        }
+
+        /* Screen Depth & Details */
+        .screen-bezel {
+            background-color: #11111b;
+            border-radius: 16px 16px 30px 16px;
+            padding: 20px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,1), 0 2px 4px rgba(255,255,255,0.1);
+            position: relative;
+            margin-bottom: 25px;
+            transform: translateZ(10px);
+        }
+        .screen-display {
+            background-color: #1e1e2e;
+            border-radius: 8px;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* UI Overlays */
+        #canvas-container { position: absolute; inset: 0; z-index: 1; }
+        .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; }
+        .scanline { position: absolute; inset: 0; pointer-events: none; z-index: 20; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%); background-size: 100% 4px; }
+        
+        /* Bars */
+        .bar-container { width: 100%; background-color: #181825; border-radius: 9999px; height: 8px; margin-top: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; transition: transform 0.2s; transform-origin: left; }
+
+        /* Physical Buttons */
+        .controls-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; transform: translateZ(15px); }
+        .d-pad { position: relative; width: 90px; height: 90px; margin: 0 auto; }
+        .d-btn { position: absolute; background: #11111b; border: 2px solid #313244; box-shadow: inset 2px 2px 5px rgba(255,255,255,0.1), 0 4px 6px rgba(0,0,0,0.5); cursor: pointer; }
+        .d-btn:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5); }
+        .d-top { top: 0; left: 30px; width: 30px; height: 35px; border-radius: 5px 5px 0 0; border-bottom: none; }
+        .d-bottom { bottom: 0; left: 30px; width: 30px; height: 35px; border-radius: 0 0 5px 5px; border-top: none; }
+        .d-left { top: 30px; left: 0; width: 35px; height: 30px; border-radius: 5px 0 0 5px; border-right: none; }
+        .d-right { top: 30px; right: 0; width: 35px; height: 30px; border-radius: 0 5px 5px 0; border-left: none; }
+        .d-center { position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; background: #11111b; z-index: 2; }
+        
+        .action-btns { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-right: 10px; }
+        .a-btn { width: 45px; height: 45px; border-radius: 50%; border: none; font-weight: bold; font-size: 10px; color: #11111b; box-shadow: 0 6px 0 rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.4); cursor: pointer; transition: 0.1s; }
+        .a-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 2px 2px 5px rgba(0,0,0,0.2); }
+        
+        /* Gameboot Sequence */
+        #boot-screen {
+            position: absolute; inset: 0; background: #cdd6f4; z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-family: 'Press Start 2P', monospace;
+        }
+        .boot-logo { color: #11111b; font-size: 20px; text-shadow: 2px 2px 0px #89b4fa; opacity: 0; transform: translateY(-20px); }
+        
+        .poop { position: absolute; font-size: 24px; pointer-events: none; z-index: 5; animation: drop 0.3s ease-in; }
+        @keyframes drop { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Perspectived Container -->
+    <div id="console-container">
+        <div class="console-shell">
+            
+            <div class="flex justify-between items-center mb-2 px-1">
+                <div class="text-[10px] font-bold text-[var(--red)] tracking-wider">PWR <span class="inline-block w-2 h-2 rounded-full bg-[var(--red)] shadow-[0_0_5px_var(--red)]"></span></div>
+                <div class="text-xs font-bold text-gray-500 tracking-widest italic">NEKO-BOY COLOR</div>
+            </div>
+
+            <!-- Screen Area -->
+            <div class="screen-bezel">
+                <div class="text-[10px] text-gray-500 mb-1 flex justify-between">
+                    <span>LVL <span id="val-lvl" class="text-[var(--lavender)]">1</span></span>
+                    <span>🪙 <span id="val-coins" class="text-[var(--yellow)]">50</span></span>
+                </div>
+                
+                <div class="screen-display" id="screen-display">
+                    <!-- Boot Screen Overlay -->
+                    <div id="boot-screen">
+                        <div class="boot-logo" id="boot-logo">NEKO<br>STUDIOS</div>
+                    </div>
+                    
+                    <div id="canvas-container"></div>
+                    <div class="scanline"></div>
+                    
+                    <!-- Poop Container -->
+                    <div id="poop-container" class="absolute inset-0 z-5 pointer-events-none"></div>
+
+                    <div class="ui-layer">
+                        <div id="status-text" class="text-[10px] text-[var(--green)] font-bold text-center bg-black/50 px-2 py-1 rounded inline-block self-center backdrop-blur-sm">SYSTEM STANDBY</div>
+                        
+                        <div id="death-overlay" class="hidden flex-col justify-center items-center h-full pointer-events-auto bg-[#11111b]/90 backdrop-blur-md rounded">
+                            <div class="text-[var(--red)] text-sm tracking-widest font-bold mb-4">GAME OVER</div>
+                            <button onclick="engine.revive()" class="a-btn bg-[var(--red)] w-auto px-4 rounded-full">RESTART</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Bars -->
+            <div class="grid grid-cols-3 gap-2 mb-6 text-[9px] font-bold tracking-wider px-2">
+                <div>
+                    <div class="flex justify-between mb-1"><span class="text-[var(--green)]">HNG</span><span id="val-hunger">100</span></div>
+                    <div class="bar-container"><div id="bar-hunger" class="bar-fill bg-[var(--green)]"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1"><span class="text-[var(--blue)]">HAP</span><span id="val-happiness">100</span></div>
+                    <div class="bar-container"><div id="bar-happiness" class="bar-fill bg-[var(--blue)]"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1"><span class="text-[var(--yellow)]">ENG</span><span id="val-energy">100</span></div>
+                    <div class="bar-container"><div id="bar-energy" class="bar-fill bg-[var(--yellow)]"></div></div>
+                </div>
+            </div>
+
+            <!-- Physical Controls -->
+            <div class="controls-grid">
+                <!-- D-Pad (Functions) -->
+                <div class="d-pad">
+                    <div class="d-center"></div>
+                    <div class="d-btn d-top" onclick="engine.clean()" title="Clean (Up)"></div>
+                    <div class="d-btn d-bottom" onclick="engine.sleep()" title="Sleep (Down)"></div>
+                    <div class="d-btn d-left"></div>
+                    <div class="d-btn d-right"></div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-btns">
+                    <button class="a-btn bg-[var(--green)]" style="margin-top: 20px;" onclick="engine.feed()">FEED<br>-10🪙</button>
+                    <button class="a-btn bg-[var(--blue)]" style="margin-bottom: 20px;" onclick="engine.play()">PLAY<br>+5🪙</button>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-center gap-4 text-[8px] text-gray-500 font-bold">
+                <div class="flex flex-col items-center"><div class="w-8 h-2 bg-gray-700 rounded-full mb-1"></div>SELECT</div>
+                <div class="flex flex-col items-center" onclick="engine.bootSequence()"><div class="w-8 h-2 bg-gray-700 rounded-full mb-1 cursor-pointer hover:bg-gray-500"></div>START</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 3D Parallax Tilt Effect for the entire Console
+        const container = document.getElementById('console-container');
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 30; // Max tilt 15deg
+            const y = (e.clientY / window.innerHeight - 0.5) * -30;
+            container.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`;
+        });
+        document.addEventListener('mouseleave', () => {
+            container.style.transform = `rotateX(0deg) rotateY(0deg)`;
+        });
+
+        // Audio Engine
+        class SynthEngine {
+            constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+            playTone(freq, type, duration, vol=0.1, delay=0) {
+                setTimeout(() => {
+                    if(this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                    osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + duration);
+                }, delay);
+            }
+            sfxBoot() { this.playTone(1046.50, 'square', 0.2, 0.1, 0); this.playTone(1318.51, 'square', 0.4, 0.1, 200); }
+            sfxFeed() { [400, 600, 800].forEach((f, i) => this.playTone(f, 'square', 0.1, 0.1, i*100)); }
+            sfxPlay() { this.playTone(880, 'sine', 0.1, 0.1, 0); this.playTone(1200, 'sine', 0.2, 0.1, 100); }
+            sfxSleep() { this.playTone(200, 'triangle', 0.5, 0.05, 0); this.playTone(150, 'triangle', 0.8, 0.05, 500); }
+            sfxClean() { this.playTone(1500, 'sine', 0.1, 0.05, 0); this.playTone(2000, 'sine', 0.1, 0.05, 100); }
+            sfxError() { this.playTone(150, 'sawtooth', 0.3, 0.1, 0); }
+            sfxDie() { [300, 200, 100].forEach((f, i) => this.playTone(f, 'sawtooth', 0.4, 0.2, i*200)); }
+            sfxLevelUp() { [440, 554, 659, 880].forEach((f, i) => this.playTone(f, 'square', 0.15, 0.1, i*150)); }
+        }
+
+        // 3D WebGL Cat Engine
+        class Graphics3D {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(45, this.container.clientWidth / this.container.clientHeight, 0.1, 100);
+                this.camera.position.z = 5;
+
+                this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.container.appendChild(this.renderer.domElement);
+
+                this.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+                let dLight = new THREE.DirectionalLight(0xffffff, 0.8); dLight.position.set(2, 5, 3);
+                this.scene.add(dLight);
+
+                this.matBody = new THREE.MeshLambertMaterial({ color: 0xcdd6f4 });
+                this.matEar = new THREE.MeshLambertMaterial({ color: 0xf38ba8 });
+                this.matEye = new THREE.MeshBasicMaterial({ color: 0x11111b });
+
+                this.cat = new THREE.Group();
+                this.head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 1.5), this.matBody);
+                this.cat.add(this.head);
+
+                const earGeo = new THREE.ConeGeometry(0.3, 0.6, 4);
+                let earL = new THREE.Mesh(earGeo, this.matEar); earL.position.set(-0.5, 0.8, 0); earL.rotation.z = 0.2;
+                let earR = new THREE.Mesh(earGeo, this.matEar); earR.position.set(0.5, 0.8, 0); earR.rotation.z = -0.2;
+                this.cat.add(earL, earR);
+
+                const eyeGeo = new THREE.BoxGeometry(0.2, 0.2, 0.1);
+                this.eyeL = new THREE.Mesh(eyeGeo, this.matEye); this.eyeL.position.set(-0.4, 0.1, 0.76);
+                this.eyeR = new THREE.Mesh(eyeGeo, this.matEye); this.eyeR.position.set(0.4, 0.1, 0.76);
+                this.cat.add(this.eyeL, this.eyeR);
+                
+                this.mouth = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), this.matEye);
+                this.mouth.position.set(0, -0.2, 0.76);
+                this.cat.add(this.mouth);
+
+                this.scene.add(this.cat);
+
+                this.pointer = new THREE.Vector2();
+                this.targetRotationY = 0; this.targetRotationX = 0; this.targetScale = 1;
+                this.isSleeping = false; this.spinMultiplier = 0;
+                
+                document.getElementById('screen-display').addEventListener('mousemove', (e) => {
+                    const rect = this.container.getBoundingClientRect();
+                    this.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                    this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                });
+            }
+
+            setState(state, playing) {
+                this.isSleeping = state.isSleeping;
+                if(!state.isAlive) { this.matBody.color.setHex(0xf38ba8); this.eyeL.scale.y = 0.1; this.eyeR.scale.y = 0.1; }
+                else if(state.isSleeping) { this.matBody.color.setHex(0x585b70); this.eyeL.scale.y = 0.1; this.eyeR.scale.y = 0.1; }
+                else if(state.hunger < 30 || state.happiness < 30 || state.poopCount > 2) { 
+                    this.matBody.color.setHex(0xa6adc8); this.eyeL.scale.set(1.5, 1.5, 1); this.eyeR.scale.set(1.5, 1.5, 1); 
+                }
+                else { this.matBody.color.setHex(0xcdd6f4); this.eyeL.scale.set(1, 1, 1); this.eyeR.scale.set(1, 1, 1); }
+
+                if(playing) {
+                    this.targetScale = 1.3; this.spinMultiplier += 1;
+                    setTimeout(() => this.targetScale = 1, 300);
+                }
+            }
+
+            render(time) {
+                if(!this.isSleeping) {
+                    this.targetRotationY = (this.pointer.x * 1.2) + (Math.sin(time * 2) * 0.05);
+                    this.targetRotationX = (-this.pointer.y * 0.8) + (Math.cos(time * 1.5) * 0.05);
+                    this.cat.position.y = Math.sin(time * 3) * 0.05;
+                    
+                    if (this.spinMultiplier > 0.01) {
+                        this.targetRotationY += (Math.PI * 2) * this.spinMultiplier;
+                        this.spinMultiplier *= 0.9;
+                    }
+                } else {
+                    this.cat.position.y = Math.sin(time) * 0.05 - 0.2;
+                    this.targetRotationY = 0; this.targetRotationX = 0.3; 
+                }
+
+                this.cat.rotation.y += (this.targetRotationY - this.cat.rotation.y) * 0.15;
+                this.cat.rotation.x += (this.targetRotationX - this.cat.rotation.x) * 0.15;
+                this.cat.scale.lerp(new THREE.Vector3(this.targetScale, this.targetScale, this.targetScale), 0.3);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Core Game Logic
+        class TamagotchiEngine {
+            constructor() {
+                this.audio = new SynthEngine();
+                this.gfx = new Graphics3D();
+                this.state = this.getDefaultState();
+                this.dom = {
+                    hBar: document.getElementById('bar-hunger'), hpBar: document.getElementById('bar-happiness'),
+                    eBar: document.getElementById('bar-energy'), stat: document.getElementById('status-text'),
+                    death: document.getElementById('death-overlay'), poopCont: document.getElementById('poop-container'),
+                    boot: document.getElementById('boot-screen'), bootLogo: document.getElementById('boot-logo')
+                };
+                
+                this.hasBooted = false;
+                this.lastTick = performance.now();
+                this.poopTimer = 0;
+            }
+
+            getDefaultState() {
+                return { hunger: 100, happiness: 100, energy: 100, isAlive: true, isSleeping: false, xp: 0, level: 1, coins: 50, poopCount: 0 };
+            }
+
+            bootSequence() {
+                if(this.hasBooted) return;
+                this.hasBooted = true;
+                
+                this.dom.bootLogo.style.transition = "all 1s ease";
+                this.dom.bootLogo.style.opacity = 1;
+                this.dom.bootLogo.style.transform = "translateY(0)";
+                this.audio.sfxBoot();
+
+                setTimeout(() => {
+                    this.dom.boot.style.transition = "opacity 0.5s ease";
+                    this.dom.boot.style.opacity = 0;
+                    setTimeout(() => {
+                        this.dom.boot.style.display = 'none';
+                        this.frameId = requestAnimationFrame((t) => this.tick(t));
+                    }, 500);
+                }, 2500);
+            }
+
+            updateUI() {
+                this.dom.hBar.style.transform = `scaleX(${Math.max(0, this.state.hunger)/100})`;
+                this.dom.hpBar.style.transform = `scaleX(${Math.max(0, this.state.happiness)/100})`;
+                this.dom.eBar.style.transform = `scaleX(${Math.max(0, this.state.energy)/100})`;
+
+                document.getElementById('val-hunger').innerText = Math.round(this.state.hunger);
+                document.getElementById('val-happiness').innerText = Math.round(this.state.happiness);
+                document.getElementById('val-energy').innerText = Math.round(this.state.energy);
+                document.getElementById('val-lvl').innerText = this.state.level;
+                document.getElementById('val-coins').innerText = this.state.coins;
+            }
+
+            tick(time) {
+                const dt = (time - this.lastTick) / 1000;
+                this.lastTick = time;
+
+                if (this.state.isAlive) {
+                    // Drain logic
+                    let drainMult = 1 + (this.state.poopCount * 0.5); // Poop makes them sad/hungry faster
+                    
+                    if (this.state.isSleeping) {
+                        this.state.energy = Math.min(100, this.state.energy + (5 * dt));
+                        this.state.hunger -= (0.2 * drainMult) * dt;
+                    } else {
+                        this.state.hunger -= (0.5 * drainMult) * dt; 
+                        this.state.happiness -= (0.4 * drainMult) * dt; 
+                        this.state.energy -= 0.2 * dt;
+                    }
+
+                    // Passive XP
+                    this.addXp(1 * dt);
+
+                    // Random Poop Spawning (Avg every 30 seconds awake)
+                    if(!this.state.isSleeping) {
+                        this.poopTimer += dt;
+                        if(this.poopTimer > 5 && Math.random() < 0.01 && this.state.poopCount < 5) {
+                            this.spawnPoop();
+                            this.poopTimer = 0;
+                        }
+                    }
+
+                    if (this.state.hunger <= 0 || this.state.happiness <= 0) this.kill();
+                    else this.updateStatus();
+                }
+
+                this.updateUI();
+                this.gfx.render(time / 1000);
+                this.frameId = requestAnimationFrame((t) => this.tick(t));
+            }
+
+            addXp(amount) {
+                this.state.xp += amount;
+                const nextLevelReq = this.state.level * 100;
+                if(this.state.xp >= nextLevelReq) {
+                    this.state.xp = 0;
+                    this.state.level++;
+                    this.audio.sfxLevelUp();
+                    this.dom.stat.innerText = `LEVEL UP! (${this.state.level})`;
+                }
+            }
+
+            spawnPoop() {
+                this.state.poopCount++;
+                const poop = document.createElement('div');
+                poop.className = 'poop';
+                poop.innerText = '💩';
+                poop.style.left = (20 + Math.random() * 60) + '%';
+                poop.style.top = (40 + Math.random() * 40) + '%';
+                this.dom.poopCont.appendChild(poop);
+            }
+
+            clean() {
+                if(!this.state.isAlive || this.state.poopCount === 0) return;
+                this.audio.sfxClean();
+                this.state.poopCount = 0;
+                this.dom.poopCont.innerHTML = '';
+                this.state.happiness = Math.min(100, this.state.happiness + 10);
+                this.dom.stat.innerText = "ALL CLEAN!";
+            }
+
+            updateStatus() {
+                if(this.state.isSleeping) { this.dom.stat.innerText = "Zzz..."; this.dom.stat.style.color = 'var(--yellow)'; }
+                else if(this.state.poopCount > 0) { this.dom.stat.innerText = "SMELLY!"; this.dom.stat.style.color = 'var(--red)'; }
+                else if(this.state.hunger < 30) { this.dom.stat.innerText = "STARVING"; this.dom.stat.style.color = 'var(--red)'; }
+                else if(this.state.happiness < 30) { this.dom.stat.innerText = "SAD"; this.dom.stat.style.color = 'var(--red)'; }
+                else { this.dom.stat.innerText = "SYSTEM NORMAL"; this.dom.stat.style.color = 'var(--green)'; }
+                this.gfx.setState(this.state, false);
+            }
+
+            feed() {
+                if (!this.state.isAlive || this.state.isSleeping) return;
+                if (this.state.coins < 10) { this.audio.sfxError(); this.dom.stat.innerText = "NOT ENOUGH 🪙"; return; }
+                this.state.coins -= 10;
+                this.state.hunger = Math.min(100, this.state.hunger + 40);
+                this.addXp(15);
+                this.audio.sfxFeed(); this.dom.stat.innerText = "NOM NOM"; this.gfx.targetScale = 1.15;
+                setTimeout(() => this.gfx.targetScale = 1, 150);
+            }
+
+            play() {
+                if (!this.state.isAlive || this.state.isSleeping) return;
+                if (this.state.energy < 20) { this.audio.sfxError(); this.dom.stat.innerText = "TOO TIRED"; return; }
+                this.state.happiness = Math.min(100, this.state.happiness + 30);
+                this.state.energy -= 20; 
+                this.state.coins += 5;
+                this.addXp(25);
+                this.audio.sfxPlay(); this.dom.stat.innerText = "SPINNING!";
+                this.gfx.setState(this.state, true);
+            }
+
+            sleep() {
+                if (!this.state.isAlive) return;
+                this.state.isSleeping = !this.state.isSleeping; 
+                if(this.state.isSleeping) this.audio.sfxSleep();
+            }
+
+            kill() {
+                this.state.isAlive = false; this.audio.sfxDie(); this.gfx.setState(this.state);
+                this.dom.death.classList.remove('hidden'); this.dom.death.classList.add('flex');
+            }
+
+            revive() {
+                this.state = this.getDefaultState();
+                this.dom.poopCont.innerHTML = '';
+                this.dom.death.classList.add('hidden'); this.dom.death.classList.remove('flex');
+            }
+        }
+        
+        const engine = new TamagotchiEngine();
+        
+        // Expose to window for global click handlers (D-Pad)
+        window.engine = engine;
+    </script>
+</body>
+</html>
