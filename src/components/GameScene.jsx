@@ -87,6 +87,13 @@ export default function GameScene() {
           <meshBasicMaterial color={0x11111b} />
         </mesh>
       </group>
+
+      {/* 3D Area / Environment */}
+      <mesh position={[0, -1.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[10, 10]} />
+        <meshLambertMaterial color={0x313244} />
+      </mesh>
+      <gridHelper args={[10, 10, 0x45475a, 0x45475a]} position={[0, -1.19, 0]} />
     </>
   )
 }

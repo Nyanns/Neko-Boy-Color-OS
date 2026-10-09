@@ -11,7 +11,7 @@ body {
     font-family: 'Courier New', Courier, monospace;
     display: flex; justify-content: center; align-items: center;
     min-height: 100vh; margin: 0; user-select: none;
-    overflow: hidden; perspective: 1200px;
+    overflow: hidden; perspective: 2500px;
 }
 
 #root { width: 100%; display: flex; justify-content: center; align-items: center; }

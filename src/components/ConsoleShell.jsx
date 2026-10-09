@@ -30,9 +30,9 @@ export default function ConsoleShell() {
       rotY += e.movementX * 0.4
       rotX -= e.movementY * 0.4
       
-      // Clamp rotation
-      rotX = Math.max(-35, Math.min(35, rotX))
-      rotY = Math.max(-35, Math.min(35, rotY))
+      // Clamp rotation strictly to maintain solid illusion
+      rotX = Math.max(-20, Math.min(20, rotX))
+      rotY = Math.max(-20, Math.min(20, rotY))
       
       container.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`
     }
