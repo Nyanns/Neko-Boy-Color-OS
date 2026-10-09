@@ -20,3 +20,5 @@ class SynthEngine {
     sfxDie() { [300, 200, 100].forEach((f, i) => this.playTone(f, 'sawtooth', 0.4, 0.2, i*200)); }
     sfxLevelUp() { [440, 554, 659, 880].forEach((f, i) => this.playTone(f, 'square', 0.15, 0.1, i*150)); }
 }
+
+export const audio = new SynthEngine();

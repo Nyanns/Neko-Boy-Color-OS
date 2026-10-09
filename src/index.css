@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import "tailwindcss";
 
 :root {
     --base: #1e1e2e; --surface0: #313244; --text: #cdd6f4;
@@ -12,6 +13,8 @@ body {
     min-height: 100vh; margin: 0; user-select: none;
     overflow: hidden; perspective: 1200px;
 }
+
+#root { width: 100%; display: flex; justify-content: center; align-items: center; }
 
 #console-container {
     transform-style: preserve-3d;
@@ -67,14 +70,14 @@ body {
 .d-center { position: absolute; top: 30px; left: 30px; width: 30px; height: 30px; background: #11111b; z-index: 2; }
 
 .action-btns { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-right: 10px; }
-.a-btn { width: 45px; height: 45px; border-radius: 50%; border: none; font-weight: bold; font-size: 10px; color: #11111b; box-shadow: 0 6px 0 rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.4); cursor: pointer; transition: 0.1s; }
+.a-btn { width: 45px; height: 45px; border-radius: 50%; border: none; font-weight: bold; font-size: 10px; color: #11111b; box-shadow: 0 6px 0 rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.4); cursor: pointer; pointer-events: auto; transition: 0.1s; }
 .a-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 2px 2px 5px rgba(0,0,0,0.2); }
 
 #boot-screen {
     position: absolute; inset: 0; background: #cdd6f4; z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center;
     font-family: 'Press Start 2P', monospace;
 }
-.boot-logo { color: #11111b; font-size: 20px; text-shadow: 2px 2px 0px #89b4fa; opacity: 0; transform: translateY(-20px); }
+.boot-logo { color: #11111b; font-size: 20px; text-shadow: 2px 2px 0px #89b4fa; opacity: 0; transform: translateY(-20px); transition: all 1s ease; }
 
 .anomaly { position: absolute; font-size: 24px; pointer-events: none; z-index: 5; animation: drop 0.3s ease-in; }
 @keyframes drop { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

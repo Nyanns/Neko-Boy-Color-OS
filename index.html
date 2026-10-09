@@ -1,87 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Neko-gotchi OS v5.0 (Modular Edition)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <div id="console-container">
-        <div class="console-shell">
-            <div class="flex justify-between items-center mb-2 px-1">
-                <div class="text-[10px] font-bold text-[var(--red)] tracking-wider">PWR <span class="inline-block w-2 h-2 rounded-full bg-[var(--red)] shadow-[0_0_5px_var(--red)]"></span></div>
-                <div class="text-xs font-bold text-gray-500 tracking-widest italic">NEKO-BOY COLOR</div>
-            </div>
-
-            <div class="screen-bezel">
-                <div class="text-[10px] text-gray-500 mb-1 flex justify-between">
-                    <span>LVL <span id="val-lvl" class="text-[var(--lavender)]">1</span></span>
-                    <span>COIN <span id="val-coins" class="text-[var(--yellow)]">50</span></span>
-                </div>
-                
-                <div class="screen-display" id="screen-display">
-                    <div id="boot-screen">
-                        <div class="boot-logo" id="boot-logo">NEKO<br>STUDIOS</div>
-                    </div>
-                    
-                    <div id="canvas-container"></div>
-                    <div class="scanline"></div>
-                    <div id="anomaly-container" class="absolute inset-0 z-5 pointer-events-none"></div>
-
-                    <div class="ui-layer">
-                        <div id="status-text" class="text-[10px] text-[var(--green)] font-bold text-center bg-black/50 px-2 py-1 rounded inline-block self-center backdrop-blur-sm">SYSTEM STANDBY</div>
-                        
-                        <div id="death-overlay" class="hidden flex-col justify-center items-center h-full pointer-events-auto bg-[#11111b]/90 backdrop-blur-md rounded">
-                            <div class="text-[var(--red)] text-sm tracking-widest font-bold mb-4">GAME OVER</div>
-                            <button onclick="engine.revive()" class="a-btn bg-[var(--red)] w-auto px-4 rounded-full">RESTART</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2 mb-6 text-[9px] font-bold tracking-wider px-2">
-                <div>
-                    <div class="flex justify-between mb-1"><span class="text-[var(--green)]">HNG</span><span id="val-hunger">100</span></div>
-                    <div class="bar-container"><div id="bar-hunger" class="bar-fill bg-[var(--green)]"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between mb-1"><span class="text-[var(--blue)]">HAP</span><span id="val-happiness">100</span></div>
-                    <div class="bar-container"><div id="bar-happiness" class="bar-fill bg-[var(--blue)]"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between mb-1"><span class="text-[var(--yellow)]">ENG</span><span id="val-energy">100</span></div>
-                    <div class="bar-container"><div id="bar-energy" class="bar-fill bg-[var(--yellow)]"></div></div>
-                </div>
-            </div>
-
-            <div class="controls-grid">
-                <div class="d-pad">
-                    <div class="d-center"></div>
-                    <div class="d-btn d-top" onclick="engine.clean()" title="Clean (Up)"></div>
-                    <div class="d-btn d-bottom" onclick="engine.sleep()" title="Sleep (Down)"></div>
-                    <div class="d-btn d-left"></div>
-                    <div class="d-btn d-right"></div>
-                </div>
-                <div class="action-btns">
-                    <button class="a-btn bg-[var(--green)]" style="margin-top: 20px;" onclick="engine.feed()">FEED<br>-10</button>
-                    <button class="a-btn bg-[var(--blue)]" style="margin-bottom: 20px;" onclick="engine.play()">PLAY<br>+5</button>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-center gap-4 text-[8px] text-gray-500 font-bold">
-                <div class="flex flex-col items-center"><div class="w-8 h-2 bg-gray-700 rounded-full mb-1"></div>SELECT</div>
-                <div class="flex flex-col items-center" onclick="engine.bootSequence()"><div class="w-8 h-2 bg-gray-700 rounded-full mb-1 cursor-pointer hover:bg-gray-500"></div>START</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modular Script Injection -->
-    <script src="js/audio.js"></script>
-    <script src="js/graphics.js"></script>
-    <script src="js/engine.js"></script>
-    <script src="js/main.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>temp-app</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
