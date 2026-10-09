@@ -9,21 +9,54 @@ export default function ConsoleShell() {
   const store = useGameStore()
   
   useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    let isDragging = false
+    let rotX = 0
+    let rotY = 0
+
+    const handleMouseDown = (e) => {
+      // Prevent drag if clicking on buttons
+      if (e.target.closest('.d-btn') || e.target.closest('.a-btn') || e.target.closest('.controls-grid')) return
+      isDragging = true
+      document.body.style.cursor = 'grabbing'
+      container.style.transition = 'none' // Rigid while dragging
+    }
+
     const handleMouseMove = (e) => {
-      if (!containerRef.current) return
-      const x = (e.clientX / window.innerWidth - 0.5) * 30
-      const y = (e.clientY / window.innerHeight - 0.5) * -30
-      containerRef.current.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`
+      if (!isDragging) return
+      
+      rotY += e.movementX * 0.4
+      rotX -= e.movementY * 0.4
+      
+      // Clamp rotation
+      rotX = Math.max(-35, Math.min(35, rotX))
+      rotY = Math.max(-35, Math.min(35, rotY))
+      
+      container.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`
     }
-    const handleMouseLeave = () => {
-      if (!containerRef.current) return
-      containerRef.current.style.transform = `rotateX(0deg) rotateY(0deg)`
+
+    const handleMouseUp = () => {
+      if (!isDragging) return
+      isDragging = false
+      document.body.style.cursor = 'default'
+      
+      // Smooth snap back
+      rotX = 0
+      rotY = 0
+      container.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+      container.style.transform = `rotateX(0deg) rotateY(0deg)`
     }
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseleave', handleMouseLeave)
+
+    window.addEventListener('mousedown', handleMouseDown)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseleave', handleMouseLeave)
+      window.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
 
